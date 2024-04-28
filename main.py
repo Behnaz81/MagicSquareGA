@@ -1,5 +1,13 @@
+###########################################################
+###Project Title: MagicSquareGA
+###Author: Behnaz Mohammad Hasani Zadeh
+###Date: 4/28/2024
+###Github Repository: https://github.com/Behnaz81/MagicSquareGA
+###Description: This project will solve Magic Square problem
+###using genetic algorithm.
+############################################################
+
 import random
-import numpy as np
 
 ##The N##
 SQUARE_SIZE = 3
@@ -46,9 +54,11 @@ def makeSecondaryPopulation(primaryPopulation, populationSize):
 ######The first 3 elements come from one parent
 ######The rest are from the elements we haven't used from
 ######the other parent
-def crossover(parent1, parent2):
+def crossover(secondaryPopulation):
     child1 = []
     child2 = []
+    parent1 = secondaryPopulation[0]
+    parent2 = secondaryPopulation[1]
     for i in range(SQUARE_SIZE):
         child1.append(parent1[i])
         child2.append(parent2[i])
@@ -62,96 +72,37 @@ def crossover(parent1, parent2):
 
 
 
-######This function makes a new population using crossover
-######Between parents and children the one with the lowest
-######fitness is in the new population.
-def populationAfterCrossover(population):
-    newPopulation = []
+########################Mutation#########################
 
-    for i in range(len(population)):
-        for j in range(i + 1, len(population)):
-            child1, child2 = crossover(population[i], population[j])
-
-            child1Fitness = fitness(child1)
-            child2Fitness = fitness(child2)
-            parent1Fitness = fitness(population[i])
-            parent2Fitness = fitness(population[j])
-
-            # print("Child1:")
-            # printElement(child1)
-            # print("fitness: ", child1Fitness)
-            # print("Child2:")
-            # printElement(child2)
-            # print("fitness: ", child2Fitness)
-            # print("parent1:")
-            # printElement(population[i])
-            # print("fitness: ", parent1Fitness)
-            # print("parent2:")
-            # printElement(population[j])
-            # print("fitness: ", parent2Fitness)
-
-
-
-            if parent1Fitness < parent2Fitness:
-                if parent1Fitness < child1Fitness:
-                    if parent1Fitness < child2Fitness:
-                        newPopulation.append(population[i])
-                    else:
-                        newPopulation.append(child2)
-                else:
-                    if child1Fitness < child2Fitness:
-                        newPopulation.append(child1)
-                    else:
-                        newPopulation.append(child2)
-            else:
-                if parent2Fitness < child1Fitness:
-                    if parent2Fitness < child2Fitness:
-                        newPopulation.append(population[j])
-                    else:
-                        newPopulation.append(child2)
-                else:
-                    if child1Fitness < child2Fitness:
-                        newPopulation.append(child1)
-                    else:
-                        newPopulation.append(child2)
-
-    return newPopulation
-
-
+######This function will do the mutation. For each element
+######a random number between 0 and 1 will be generated. If
+######the random number was less than 0.2 the element swaps
+######places with another random element.
 def mutation(element):
-    x1 = random.randint(0, 2)
-    y1 = random.randint(0, 2)
+    for i in range(0, len(element)):
 
-    x2 = random.randint(0, 2)
-    y2 = random.randint(0, 2)
+        mutationRate = random.random()
 
-    # print("Before:")
-    # printElement(element)
-
-    element[y1 + x1 * SQUARE_SIZE], element[y2 + x2 * SQUARE_SIZE] = element[y2 + x2 * SQUARE_SIZE], element[y1 + x1 * SQUARE_SIZE]
-
-    # print("After:")
-    # printElement(element)
+        if mutationRate < 0.2:
+            indx = random.randint(0, len(element) - 1)
+            while indx == i:
+                indx = random.randint(0, len(element) - 1)
+            element[i], element[indx] = element[indx], element[i]
 
     return element
 
 
-def populationAfterMutation(population):
-    newPopulation = []
-    for i in range(len(population)):
-        newGene = mutation(population[i])
 
-        if fitness(newGene) < fitness(population[i]):
-            newPopulation.append(newGene)
-        else:
-            newPopulation.append(population[i])
+####################Fitness#######################
 
-    return newPopulation
-
-
+######This function calculates the fitness of a gene.
+######It's based on how many rows, columns and diameters
+######don't have the sum of 15. So the less the fitness is
+######the better the gene is.
 def fitness(element):
     error = 0
 
+    #For rows
     for j in range(SQUARE_SIZE):
         sum = 0
         for i in range(SQUARE_SIZE):
@@ -159,6 +110,7 @@ def fitness(element):
         if sum != 15:
             error += 1
 
+    #For columns
     for j in range(SQUARE_SIZE):
         sum = 0
         for i in range(SQUARE_SIZE):
@@ -166,7 +118,7 @@ def fitness(element):
         if sum != 15:
             error += 1
 
-
+    #For diameter
     if (element[0] + element[4] + element[8]) != 15:
         error += 1
 
@@ -176,63 +128,64 @@ def fitness(element):
     return error
 
 
+
+#######################Print#######################
+######This function helps us to print the genes.
 def printElement(element):
-    for i in element:
-        print(i, end="")
+    for i in range(SQUARE_SIZE):
+        for j in range(SQUARE_SIZE):
+            print(element[i * 3 + j], end="")
+        print()
 
-#
-# element = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
-# scoreElement = fitness(element)
-#
-# generation = 0
-#
-# print(("=" * 30) + " fitness: " + str(scoreElement) + " generation " + str(generation))
-# print("")
-# printElement(element)
-#
-# while (fitness(element) != 0):
-#     mutant = mutation(element)
-#     mutant = mutation(mutant)
-#
-#     score = fitness(mutant)
-#
-#     if (score < scoreElement):
-#         scoreElement = score
-#         element = mutant
-#
-#     generation += 1
-#     print(("=" * 30) + " fitness: " + str(scoreElement) + " generation " + str(generation))
-#     print("")
-#     printElement(element)
 
+
+####################Main####################
 
 population = []
+fitnesses = []
 #Make a population with 10 genes
 population = makePrimaryPopulation(10)
-print("Primary population:")
-#Printing the first population
-for element in population:
-    printElement(element)
-    print()
-
-secondaryPopulation = makeSecondaryPopulation(population, 2)
-print("Secondary population:")
-for element in secondaryPopulation:
-    printElement(element)
-    print()
-
-# newPopulation = []
-#
-# newPopulation = populationAfterCrossover(population)
-# print("New Population:")
-# for element in newPopulation:
+for i in range(10):
+    fitnesses.append(fitness(population[i]))
+# print("Primary population:")
+# #Printing the first population
+# for element in population:
 #     printElement(element)
 #     print()
 
-# newPopulation = populationAfterMutation(newPopulation)
-# print("New Population:")
-# for element in newPopulation:
-#     printElement(element)
-#     print()
-#     print("fitness:", fitness(element))
-#     print()
+
+#As long as the minimum fitness is 1 or less we continue making new genes
+while(min(fitnesses) >= 2):
+
+    #Choose two parents and make a secondary population
+    secondaryPopulation = makeSecondaryPopulation(population, 2)
+    # print("Secondary population:")
+    # for element in secondaryPopulation:
+    #     printElement(element)
+    #     print()
+
+    #Do the cross over
+    child1, child2 = crossover(secondaryPopulation)
+
+    # print("After Crossover:")
+    # printElement(child1)
+    # print()
+    # printElement(child2)
+    # print()
+
+    #Add the new genes to the population
+    population.append(mutation(child1))
+    population.append(mutation(child2))
+    fitnesses.append(fitness(child1))
+    fitnesses.append(fitness(child2))
+
+    # print("After Mutation:")
+    # for element in secondaryPopulation:
+    #     printElement(element)
+    #     print()
+
+
+#The final solution!
+print("Final Solution:")
+printElement(population[fitnesses.index(min(fitnesses))])
+
