@@ -8,6 +8,7 @@
 ############################################################
 
 import random
+import matplotlib.pyplot as plt
 
 ##The N##
 SQUARE_SIZE = 3
@@ -143,6 +144,7 @@ def printElement(element):
 
 population = []
 fitnesses = []
+bestFitnesses = []
 #Make a population with 10 genes
 population = makePrimaryPopulation(10)
 for i in range(10):
@@ -153,6 +155,7 @@ for i in range(10):
 #     printElement(element)
 #     print()
 
+bestFitnesses.append(min(fitnesses))
 
 #As long as the minimum fitness is 1 or less we continue making new genes
 while(min(fitnesses) >= 2):
@@ -178,7 +181,7 @@ while(min(fitnesses) >= 2):
     population.append(mutation(child2))
     fitnesses.append(fitness(child1))
     fitnesses.append(fitness(child2))
-
+    bestFitnesses.append(min(fitnesses))
     # print("After Mutation:")
     # for element in secondaryPopulation:
     #     printElement(element)
@@ -189,3 +192,7 @@ while(min(fitnesses) >= 2):
 print("Final Solution:")
 printElement(population[fitnesses.index(min(fitnesses))])
 
+#To show the best fitnesses we had in each generation
+for i in range(len(bestFitnesses)):
+    plt.scatter(i, bestFitnesses[i])
+plt.show()
