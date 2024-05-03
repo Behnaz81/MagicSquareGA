@@ -13,13 +13,16 @@ import matplotlib.pyplot as plt
 ##The N##
 SQUARE_SIZE = 3
 
+##The Mutation Rate##
+MUTATION_RATE = 0.05
+
 ##############Make The Primary Population#############
 
 ######This Function will make the primary population
 ######The genes will be made of random numbers and
 ######And no genes will be repeating in the population.
 def makePrimaryPopulation(populationSize):
-    numbers = list(range(1, 10))
+    numbers = list(range(1, SQUARE_SIZE ** 2 + 1))
     population = [random.sample(numbers, len(numbers)) for _ in range(populationSize)]
 
     return population
@@ -33,11 +36,11 @@ def makePrimaryPopulation(populationSize):
 def makeSecondaryPopulation(primaryPopulation, populationSize):
     secondaryPopulation = []
     for i in range(populationSize):
-        element1 = random.randint(0, 9)
-        element2 = random.randint(0, 9)
+        element1 = random.randint(0, len(primaryPopulation) - 1)
+        element2 = random.randint(0, len(primaryPopulation) - 1)
 
-        while element1 != element2:
-            element2 = random.randint(0, 9)
+        while element1 == element2:
+            element2 = random.randint(0, len(primaryPopulation) - 1)
 
         if fitness(primaryPopulation[element1]) > fitness(primaryPopulation[element2]):
             secondaryPopulation.append(population[element1])
@@ -77,28 +80,30 @@ def crossover(secondaryPopulation):
 
 ######This function will do the mutation. For each element
 ######a random number between 0 and 1 will be generated. If
-######the random number was less than 0.2 the element swaps
-######places with another random element.
-def mutation(element):
-    for i in range(0, len(element)):
+######the random number was less than mutation rate the element
+######swaps places with another random element.
+def mutation(population):
+    fitnesses = []
+    for element in population:
+        for i in range(0, len(element)):
 
-        mutationRate = random.random()
+            randomNumber = random.random()
 
-        if mutationRate < 0.2:
-            indx = random.randint(0, len(element) - 1)
-            while indx == i:
+            if randomNumber < MUTATION_RATE:
                 indx = random.randint(0, len(element) - 1)
-            element[i], element[indx] = element[indx], element[i]
+                while indx == i:
+                    indx = random.randint(0, len(element) - 1)
+                element[i], element[indx] = element[indx], element[i]
+        fitnesses.append(fitness(element))
 
-    return element
-
+    return population, fitnesses
 
 
 ####################Fitness#######################
 
 ######This function calculates the fitness of a gene.
 ######It's based on how many rows, columns and diameters
-######don't have the sum of 15. So the less the fitness is
+######don't have the sum of 15. So the less the fitness is,
 ######the better the gene is.
 def fitness(element):
     error = 0
@@ -142,26 +147,28 @@ def printElement(element):
 
 ####################Main####################
 
-population = []
 fitnesses = []
 bestFitnesses = []
-#Make a population with 10 genes
-population = makePrimaryPopulation(10)
-for i in range(10):
+#Make a population with 50 genes
+population = makePrimaryPopulation(50)
+#Save the fitnesses in a list
+for i in range(50):
     fitnesses.append(fitness(population[i]))
+
 # print("Primary population:")
-# #Printing the first population
+#Printing the first population
 # for element in population:
 #     printElement(element)
 #     print()
 
 bestFitnesses.append(min(fitnesses))
 
-#As long as the minimum fitness is 1 or less we continue making new genes
+#As long as the minimum fitness is 2 or more we continue making new genes
 while(min(fitnesses) >= 2):
 
     #Choose two parents and make a secondary population
     secondaryPopulation = makeSecondaryPopulation(population, 2)
+
     # print("Secondary population:")
     # for element in secondaryPopulation:
     #     printElement(element)
@@ -177,11 +184,15 @@ while(min(fitnesses) >= 2):
     # print()
 
     #Add the new genes to the population
-    population.append(mutation(child1))
-    population.append(mutation(child2))
-    fitnesses.append(fitness(child1))
-    fitnesses.append(fitness(child2))
+    population.append(child1)
+    population.append(child2)
+
+    #Mutate the whole population
+    population, fitnesses = mutation(population)
+
+    #Find the best fitness of this generation
     bestFitnesses.append(min(fitnesses))
+    
     # print("After Mutation:")
     # for element in secondaryPopulation:
     #     printElement(element)
@@ -193,6 +204,5 @@ print("Final Solution:")
 printElement(population[fitnesses.index(min(fitnesses))])
 
 #To show the best fitnesses we had in each generation
-for i in range(len(bestFitnesses)):
-    plt.scatter(i, bestFitnesses[i])
+plt.scatter(list(range(len(bestFitnesses))), bestFitnesses)
 plt.show()
